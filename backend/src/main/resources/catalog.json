@@ -1,0 +1,317 @@
+{
+  "slug": "access-review",
+  "name": "知华访问权限复核",
+  "subtitle": "权限清单、复核活动、整改跟踪与审计证明",
+  "accent": "#6e5b76",
+  "modules": [
+    {
+      "key": "identities",
+      "label": "人员身份",
+      "description": "员工、部门、负责人和在职状态",
+      "initial": "ACTIVE",
+      "editable": true,
+      "creatable": true,
+      "fields": [
+        {
+          "key": "employeeNo",
+          "label": "员工编号",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "name",
+          "label": "姓名",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "department",
+          "label": "部门",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "manager",
+          "label": "直属负责人",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        }
+      ],
+      "actions": []
+    },
+    {
+      "key": "entitlements",
+      "label": "系统权限",
+      "description": "应用、权限级别和获权依据",
+      "initial": "ACTIVE",
+      "editable": false,
+      "creatable": true,
+      "fields": [
+        {
+          "key": "identity",
+          "label": "人员身份",
+          "type": "ref",
+          "required": true,
+          "ref": "identities",
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "system",
+          "label": "业务系统",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "privilege",
+          "label": "权限名称",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "risk",
+          "label": "风险级别",
+          "type": "select",
+          "required": true,
+          "ref": null,
+          "options": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "grantedAt",
+          "label": "授权日期",
+          "type": "date",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        }
+      ],
+      "actions": []
+    },
+    {
+      "key": "campaigns",
+      "label": "复核活动",
+      "description": "范围快照、逐项决策、整改与关闭",
+      "initial": "DRAFT",
+      "editable": true,
+      "creatable": true,
+      "fields": [
+        {
+          "key": "name",
+          "label": "活动名称",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "system",
+          "label": "复核系统（ALL 或系统名）",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "dueDate",
+          "label": "截止日期",
+          "type": "date",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        }
+      ],
+      "actions": [
+        {
+          "key": "launch",
+          "label": "发起权限复核",
+          "from": [
+            "DRAFT"
+          ],
+          "to": "ACTIVE",
+          "role": "OPERATOR",
+          "separate": false,
+          "fields": []
+        },
+        {
+          "key": "close",
+          "label": "关闭复核活动",
+          "from": [
+            "ACTIVE"
+          ],
+          "to": "CLOSED",
+          "role": "ADMIN",
+          "separate": true,
+          "fields": []
+        }
+      ]
+    },
+    {
+      "key": "reviews",
+      "label": "复核任务",
+      "description": "认证或撤销决策，整改完成后才能关闭活动",
+      "initial": "PENDING",
+      "editable": false,
+      "creatable": false,
+      "fields": [
+        {
+          "key": "campaign",
+          "label": "活动",
+          "type": "ref",
+          "required": true,
+          "ref": "campaigns",
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "entitlement",
+          "label": "系统权限",
+          "type": "ref",
+          "required": true,
+          "ref": "entitlements",
+          "options": [],
+          "min": null,
+          "max": null
+        }
+      ],
+      "actions": [
+        {
+          "key": "certify",
+          "label": "确认保留权限",
+          "from": [
+            "PENDING"
+          ],
+          "to": "CERTIFIED",
+          "role": "REVIEWER",
+          "separate": true,
+          "fields": [
+            {
+              "key": "reason",
+              "label": "保留理由",
+              "type": "text",
+              "required": true,
+              "ref": null,
+              "options": [],
+              "min": null,
+              "max": null
+            }
+          ]
+        },
+        {
+          "key": "revoke",
+          "label": "要求撤销权限",
+          "from": [
+            "PENDING"
+          ],
+          "to": "REVOKE_REQUESTED",
+          "role": "REVIEWER",
+          "separate": true,
+          "fields": [
+            {
+              "key": "reason",
+              "label": "撤销原因",
+              "type": "text",
+              "required": true,
+              "ref": null,
+              "options": [],
+              "min": null,
+              "max": null
+            }
+          ]
+        },
+        {
+          "key": "remediate",
+          "label": "执行权限撤销",
+          "from": [
+            "REVOKE_REQUESTED"
+          ],
+          "to": "REMEDIATED",
+          "role": "OPERATOR",
+          "separate": true,
+          "fields": [
+            {
+              "key": "ticket",
+              "label": "整改工单号",
+              "type": "text",
+              "required": true,
+              "ref": null,
+              "options": [],
+              "min": null,
+              "max": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "remediations",
+      "label": "整改流水",
+      "description": "实际撤权与工单号的不可修改记录",
+      "initial": "POSTED",
+      "editable": false,
+      "creatable": false,
+      "fields": [
+        {
+          "key": "review",
+          "label": "复核任务",
+          "type": "ref",
+          "required": true,
+          "ref": "reviews",
+          "options": [],
+          "min": null,
+          "max": null
+        },
+        {
+          "key": "ticket",
+          "label": "整改工单号",
+          "type": "text",
+          "required": true,
+          "ref": null,
+          "options": [],
+          "min": null,
+          "max": null
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

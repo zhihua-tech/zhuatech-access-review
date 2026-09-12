@@ -1,0 +1,134 @@
+[
+  {
+    "op": "create",
+    "as": "person",
+    "module": "identities",
+    "data": {
+      "employeeNo": "ZH-1001",
+      "name": "王华",
+      "department": "财务部",
+      "manager": "财务主管"
+    }
+  },
+  {
+    "op": "create",
+    "as": "ent1",
+    "module": "entitlements",
+    "data": {
+      "identity": "$person.id",
+      "system": "ERP",
+      "privilege": "采购查询",
+      "risk": "LOW",
+      "grantedAt": "$today-10"
+    }
+  },
+  {
+    "op": "create",
+    "as": "ent2",
+    "module": "entitlements",
+    "data": {
+      "identity": "$person.id",
+      "system": "ERP",
+      "privilege": "付款审批",
+      "risk": "HIGH",
+      "grantedAt": "$today-8"
+    }
+  },
+  {
+    "op": "create",
+    "as": "campaign",
+    "module": "campaigns",
+    "data": {
+      "name": "季度 ERP 权限复核",
+      "system": "ERP",
+      "dueDate": "$today+7"
+    }
+  },
+  {
+    "op": "action",
+    "target": "campaign",
+    "action": "launch"
+  },
+  {
+    "op": "find",
+    "as": "review1",
+    "module": "reviews",
+    "where": {
+      "data.entitlement": "$ent1.id"
+    }
+  },
+  {
+    "op": "find",
+    "as": "review2",
+    "module": "reviews",
+    "where": {
+      "data.entitlement": "$ent2.id"
+    }
+  },
+  {
+    "op": "action",
+    "target": "review1",
+    "action": "certify",
+    "role": "reviewer",
+    "data": {
+      "reason": "岗位职责仍需查询权限"
+    }
+  },
+  {
+    "op": "action",
+    "target": "review2",
+    "action": "revoke",
+    "role": "reviewer",
+    "data": {
+      "reason": "不应保留付款审批"
+    }
+  },
+  {
+    "op": "action",
+    "target": "campaign",
+    "action": "close",
+    "role": "admin",
+    "error": 409
+  },
+  {
+    "op": "action",
+    "target": "review2",
+    "action": "remediate",
+    "role": "admin",
+    "data": {
+      "ticket": "IAM-REM-001"
+    }
+  },
+  {
+    "op": "check",
+    "target": "ent2",
+    "expect": {
+      "state": "REVOKED"
+    }
+  },
+  {
+    "op": "action",
+    "target": "campaign",
+    "action": "close",
+    "role": "admin"
+  },
+  {
+    "op": "check",
+    "target": "campaign",
+    "expect": {
+      "state": "CLOSED",
+      "data.scopeCount": 2
+    }
+  },
+  {
+    "op": "count",
+    "module": "remediations",
+    "count": 1
+  },
+  {
+    "op": "metric",
+    "expect": {
+      "待撤权整改": 0
+    }
+  }
+]
