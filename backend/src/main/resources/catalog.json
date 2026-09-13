@@ -172,6 +172,15 @@
           "fields": []
         },
         {
+          "key": "sync",
+          "label": "补录新增授权",
+          "from": ["ACTIVE"],
+          "to": "ACTIVE",
+          "role": "OPERATOR",
+          "separate": false,
+          "fields": []
+        },
+        {
           "key": "close",
           "label": "关闭复核活动",
           "from": [
