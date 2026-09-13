@@ -107,6 +107,25 @@
     }
   },
   {
+    "op": "create",
+    "as": "new_entitlement",
+    "module": "entitlements",
+    "data": {
+      "identity": "$person.id",
+      "system": "ERP",
+      "privilege": "库存调整",
+      "risk": "HIGH",
+      "grantedAt": "$today"
+    }
+  },
+  {"op":"action","target":"campaign","action":"close","role":"admin","error":409},
+  {"op":"action","target":"campaign","action":"sync"},
+  {"op":"check","target":"campaign","expect":{"state":"ACTIVE","data.scopeCount":3,"data.lastSyncCount":1}},
+  {"op":"action","target":"campaign","action":"sync","error":409},
+  {"op":"find","as":"new_review","module":"reviews","where":{"data.entitlement":"$new_entitlement.id"}},
+  {"op":"action","target":"campaign","action":"close","role":"admin","error":409},
+  {"op":"action","target":"new_review","action":"certify","role":"reviewer","data":{"reason":"新增授权已核实"}},
+  {
     "op": "action",
     "target": "campaign",
     "action": "close",
@@ -117,7 +136,7 @@
     "target": "campaign",
     "expect": {
       "state": "CLOSED",
-      "data.scopeCount": 2
+      "data.scopeCount": 3
     }
   },
   {

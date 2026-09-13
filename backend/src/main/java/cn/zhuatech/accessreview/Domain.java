@@ -8,6 +8,9 @@ import static cn.zhuatech.accessreview.Engine.*;
 @Component public class Domain {
  static String text(Row r,String k){return txt(r.data(),k);}
  static List<Row> linked(Engine e,User u,String module,String field,String id){return e.all(u,module).stream().filter(x->text(x,field).equals(id)).toList();}
+ static List<Row> inScope(Engine e,User u,String system){return e.all(u,"entitlements").stream().filter(x->x.state().equals("ACTIVE")&&(system.equalsIgnoreCase("ALL")||text(x,"system").equalsIgnoreCase(system))).toList();}
+ static List<Row> missing(Engine e,User u,Row campaign){Set<String>covered=new HashSet<>();for(Row review:linked(e,u,"reviews","campaign",campaign.id()))covered.add(text(review,"entitlement"));return inScope(e,u,text(campaign,"system")).stream().filter(x->!covered.contains(x.id())).toList();}
+ static void appendReviews(Engine e,User u,Row campaign,List<Row> items){for(Row ent:items)e.ledger(u,"reviews","PENDING",Map.of("campaign",campaign.id(),"entitlement",ent.id(),"identity",text(ent,"identity"),"system",text(ent,"system"),"privilege",text(ent,"privilege"),"risk",text(ent,"risk")));}
  public void create(Engine e,User u,String module,Map<String,Object>d){
   switch(module){
    case "identities" -> require(e.all(u,module).stream().noneMatch(x->text(x,"employeeNo").equalsIgnoreCase(txt(d,"employeeNo"))),"员工编号重复");
@@ -21,13 +24,18 @@ import static cn.zhuatech.accessreview.Engine.*;
  public String action(Engine e,User u,Row r,String action,Map<String,Object>i,Map<String,Object>d){
   switch(r.module()+"."+action){
    case "campaigns.launch" -> {
-    String system=txt(d,"system");var active=e.all(u,"entitlements").stream().filter(x->x.state().equals("ACTIVE")&&(system.equalsIgnoreCase("ALL")||text(x,"system").equalsIgnoreCase(system))).toList();
+    String system=txt(d,"system");var active=inScope(e,u,system);
     require(!active.isEmpty(),"当前范围没有有效权限");
-    require(e.all(u,"campaigns").stream().noneMatch(x->!x.id().equals(r.id())&&x.state().equals("ACTIVE")&&text(x,"system").equalsIgnoreCase(system)),"同一系统已有进行中的复核活动");
-    for(Row ent:active)e.ledger(u,"reviews","PENDING",Map.of("campaign",r.id(),"entitlement",ent.id(),"identity",text(ent,"identity"),"system",text(ent,"system"),"privilege",text(ent,"privilege"),"risk",text(ent,"risk")));
+    require(e.all(u,"campaigns").stream().noneMatch(x->!x.id().equals(r.id())&&x.state().equals("ACTIVE")&&(system.equalsIgnoreCase("ALL")||text(x,"system").equalsIgnoreCase("ALL")||text(x,"system").equalsIgnoreCase(system))),"同一系统已有进行中的复核活动");
+    appendReviews(e,u,r,active);
     d.put("scopeCount",active.size());d.put("launchedAt",Instant.now().toString());
    }
+   case "campaigns.sync" -> {
+    var additions=missing(e,u,r);require(!additions.isEmpty(),"当前范围没有待补录的新增授权");
+    appendReviews(e,u,r,additions);d.put("scopeCount",((Number)d.get("scopeCount")).intValue()+additions.size());d.put("lastSyncedAt",Instant.now().toString());d.put("lastSyncCount",additions.size());
+   }
    case "campaigns.close" -> {
+    require(missing(e,u,r).isEmpty(),"活动期间有新增授权尚未补录，请先补录并完成复核");
     var items=linked(e,u,"reviews","campaign",r.id());require(!items.isEmpty()&&items.size()==((Number)d.get("scopeCount")).intValue(),"复核范围不完整");
     require(items.stream().allMatch(x->Set.of("CERTIFIED","REMEDIATED").contains(x.state())),"仍有待决策或待整改权限");
     d.put("closedAt",Instant.now().toString());d.put("closedBy",u.username());
