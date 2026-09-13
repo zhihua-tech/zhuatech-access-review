@@ -125,6 +125,24 @@
   {"op":"find","as":"new_review","module":"reviews","where":{"data.entitlement":"$new_entitlement.id"}},
   {"op":"action","target":"campaign","action":"close","role":"admin","error":409},
   {"op":"action","target":"new_review","action":"certify","role":"reviewer","data":{"reason":"新增授权已核实"}},
+  {"op":"check","target":"new_review","expect":{"state":"CERTIFICATION_PENDING"}},
+  {"op":"metric","expect":{"待复核权限":1}},
+  {"op":"action","target":"campaign","action":"close","role":"admin","error":409},
+  {"op":"action","target":"new_review","action":"confirm","role":"reviewer","data":{"reason":"部门负责人复核"},"error":403},
+  {"op":"action","target":"new_review","action":"confirm","role":"admin","data":{"reason":"业务负责人核对岗位职责，批准保留"}},
+  {"op":"count","module":"confirmations","count":1},
+  {"op":"create","as":"new_entitlement2","module":"entitlements","data":{"identity":"$person.id","system":"ERP","privilege":"总账过账","risk":"HIGH","grantedAt":"$today"}},
+  {"op":"action","target":"campaign","action":"sync"},
+  {"op":"find","as":"new_review2","module":"reviews","where":{"data.entitlement":"$new_entitlement2.id"}},
+  {"op":"action","target":"new_review2","action":"certify","role":"admin","data":{"reason":"申请人声称仍需保留"}},
+  {"op":"action","target":"new_review2","action":"deny","role":"admin","data":{"reason":"初审本人不得二次确认"},"error":409},
+  {"op":"action","target":"new_review2","action":"deny","role":"admin2","data":{"reason":"超出岗位职责，必须撤权"}},
+  {"op":"check","target":"new_review2","expect":{"state":"REVOKE_REQUESTED","data.confirmationDecision":"DENIED"}},
+  {"op":"action","target":"campaign","action":"close","role":"admin","error":409},
+  {"op":"action","target":"new_review2","action":"remediate","role":"admin","data":{"ticket":"IAM-REM-002"}},
+  {"op":"find","as":"denial","module":"confirmations","where":{"data.review":"$new_review2.id"}},
+  {"op":"check","target":"denial","expect":{"data.decision":"DENIED"}},
+  {"op":"count","module":"confirmations","count":2},
   {
     "op": "action",
     "target": "campaign",
@@ -136,13 +154,13 @@
     "target": "campaign",
     "expect": {
       "state": "CLOSED",
-      "data.scopeCount": 3
+      "data.scopeCount": 4
     }
   },
   {
     "op": "count",
     "module": "remediations",
-    "count": 1
+    "count": 2
   },
   {
     "op": "metric",

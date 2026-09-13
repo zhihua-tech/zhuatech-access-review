@@ -43,6 +43,17 @@ import static cn.zhuatech.accessreview.Engine.*;
    case "reviews.certify","reviews.revoke" -> {
     Row campaign=e.ref(u,d,"campaign","campaigns");require(campaign.state().equals("ACTIVE"),"活动已关闭");
     d.put("decisionBy",u.username());d.put("decisionAt",Instant.now().toString());d.put("decisionReason",txt(i,"reason"));
+    if(action.equals("certify")&&txt(d,"risk").equals("HIGH"))return "CERTIFICATION_PENDING";
+   }
+   case "reviews.confirm","reviews.deny" -> {
+    Row campaign=e.ref(u,d,"campaign","campaigns");require(campaign.state().equals("ACTIVE"),"活动已关闭");
+    require(txt(d,"risk").equals("HIGH"),"仅高风险保留决策需要二次确认");
+    require(!u.username().equals(txt(d,"decisionBy")),"初审与二次确认必须由不同人员完成");
+    String reason=txt(i,"reason");
+    boolean approved=action.equals("confirm");
+    e.ledger(u,"confirmations","POSTED",Map.of("review",r.id(),"decisionBy",txt(d,"decisionBy"),"confirmedBy",u.username(),"reason",reason,"confirmedAt",Instant.now().toString(),"decision",approved?"APPROVED":"DENIED"));
+    d.put("confirmedBy",u.username());d.put("confirmedAt",Instant.now().toString());d.put("confirmationReason",reason);d.put("confirmationDecision",approved?"APPROVED":"DENIED");
+    if(!approved)return "REVOKE_REQUESTED";
    }
    case "reviews.remediate" -> {
     Row ent=e.ref(u,d,"entitlement","entitlements");require(ent.state().equals("ACTIVE"),"权限已撤销");
@@ -54,5 +65,5 @@ import static cn.zhuatech.accessreview.Engine.*;
   }
   return null;
  }
- public Map<String,Object> metrics(Engine e,User u){return Map.of("待复核权限",e.all(u,"reviews").stream().filter(r->r.state().equals("PENDING")).count(),"待撤权整改",e.all(u,"reviews").stream().filter(r->r.state().equals("REVOKE_REQUESTED")).count(),"已关闭活动",e.all(u,"campaigns").stream().filter(r->r.state().equals("CLOSED")).count());}
+ public Map<String,Object> metrics(Engine e,User u){return Map.of("待复核权限",e.all(u,"reviews").stream().filter(r->Set.of("PENDING","CERTIFICATION_PENDING").contains(r.state())).count(),"待撤权整改",e.all(u,"reviews").stream().filter(r->r.state().equals("REVOKE_REQUESTED")).count(),"已关闭活动",e.all(u,"campaigns").stream().filter(r->r.state().equals("CLOSED")).count());}
 }
