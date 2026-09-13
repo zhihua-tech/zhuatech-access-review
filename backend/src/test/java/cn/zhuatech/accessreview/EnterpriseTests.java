@@ -40,6 +40,8 @@ class EnterpriseTests {
    assertEquals(200,call("POST","/admin/users",Map.of("username",name,"password","Test-Review-2026!","role","REVIEWER"),"admin").status());
    tokens.put(name,call("POST","/auth/login",Map.of("username",name,"password","Test-Review-2026!"),null).body().get("token").toString());
   }
+  assertEquals(200,call("POST","/admin/users",Map.of("username","admin2","password","Test-Admin2-2026!","role","ADMIN"),"admin").status());
+  tokens.put("admin2",call("POST","/auth/login",Map.of("username","admin2","password","Test-Admin2-2026!"),null).body().get("token").toString());
   try(var in=getClass().getResourceAsStream("/acceptance.json")){steps=json.readValue(in,List.class);}
  }
  @SuppressWarnings("unchecked") Object resolve(Object value){
