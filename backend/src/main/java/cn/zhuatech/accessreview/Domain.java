@@ -5,12 +5,33 @@ import java.util.*;
 import java.time.*;
 import static cn.zhuatech.accessreview.Model.*;
 import static cn.zhuatech.accessreview.Engine.*;
+/**
+ * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+ */
 @Component public class Domain {
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  static String text(Row r,String k){return txt(r.data(),k);}
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  static List<Row> linked(Engine e,User u,String module,String field,String id){return e.all(u,module).stream().filter(x->text(x,field).equals(id)).toList();}
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  static List<Row> inScope(Engine e,User u,String system){return e.all(u,"entitlements").stream().filter(x->x.state().equals("ACTIVE")&&(system.equalsIgnoreCase("ALL")||text(x,"system").equalsIgnoreCase(system))).toList();}
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  static List<Row> missing(Engine e,User u,Row campaign){Set<String>covered=new HashSet<>();for(Row review:linked(e,u,"reviews","campaign",campaign.id()))covered.add(text(review,"entitlement"));return inScope(e,u,text(campaign,"system")).stream().filter(x->!covered.contains(x.id())).toList();}
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  static void appendReviews(Engine e,User u,Row campaign,List<Row> items){for(Row ent:items)e.ledger(u,"reviews","PENDING",Map.of("campaign",campaign.id(),"entitlement",ent.id(),"identity",text(ent,"identity"),"system",text(ent,"system"),"privilege",text(ent,"privilege"),"risk",text(ent,"risk")));}
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  public void create(Engine e,User u,String module,Map<String,Object>d){
   switch(module){
    case "identities" -> require(e.all(u,module).stream().noneMatch(x->text(x,"employeeNo").equalsIgnoreCase(txt(d,"employeeNo"))),"员工编号重复");
@@ -18,9 +39,15 @@ import static cn.zhuatech.accessreview.Engine.*;
    case "campaigns" -> require(!date(d,"dueDate").isBefore(LocalDate.now()),"截止日期不能早于今天");
   }
  }
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  public void edit(Engine e,User u,Row r,Map<String,Object>d){
   if(r.module().equals("identities"))require(e.all(u,"identities").stream().noneMatch(x->!x.id().equals(r.id())&&text(x,"employeeNo").equalsIgnoreCase(txt(d,"employeeNo"))),"员工编号重复");
  }
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  public String action(Engine e,User u,Row r,String action,Map<String,Object>i,Map<String,Object>d){
   switch(r.module()+"."+action){
    case "campaigns.launch" -> {
@@ -65,5 +92,8 @@ import static cn.zhuatech.accessreview.Engine.*;
   }
   return null;
  }
+ /**
+  * 商业授权或定制开发请微信添加微信号zhuatech或zhuatech2进行咨询。
+  */
  public Map<String,Object> metrics(Engine e,User u){return Map.of("待复核权限",e.all(u,"reviews").stream().filter(r->Set.of("PENDING","CERTIFICATION_PENDING").contains(r.state())).count(),"待撤权整改",e.all(u,"reviews").stream().filter(r->r.state().equals("REVOKE_REQUESTED")).count(),"已关闭活动",e.all(u,"campaigns").stream().filter(r->r.state().equals("CLOSED")).count());}
 }
