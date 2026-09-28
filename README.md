@@ -1,5 +1,7 @@
 # 知华访问权限复核
 
+[简体中文](README.md) | [English](README.en.md)
+
 `zhuatech-access-review` 是上海如静知华信息科技有限公司面向企业 IAM/内控团队的权限复核源码版。通过真实的权限快照、人员决策和整改闭环，让一次季度复核有完整证据链。官网：[知华科技](https://www.zhuatech.cn/)。
 
 ## 一次复核如何完成
